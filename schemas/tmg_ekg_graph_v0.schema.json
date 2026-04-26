@@ -52,29 +52,45 @@
       "enum": ["EPAP", "VQT", "PMS", "NONE"]
     },
     "node": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "kind"],
-      "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "kind": {
-          "type": "string",
-          "enum": ["repo", "authority", "upg", "artifact", "file"]
-        },
-        "label": { "type": "string" },
-        "path": { "type": "string", "description": "Repo-relative or logical path when applicable" },
-        "github": { "type": "string", "description": "Logical GitHub repo id for repo nodes" },
-        "classification": { "$ref": "#/$defs/classification" },
-        "lane_tags": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/lane_tag" },
-          "uniqueItems": true
-        },
-        "metadata": {
+      "allOf": [
+        {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": false,
+          "required": ["id", "kind"],
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "kind": {
+              "type": "string",
+              "enum": ["repo", "authority", "upg", "artifact", "file"]
+            },
+            "label": { "type": "string" },
+            "path": { "type": "string" },
+            "github": { "type": "string" },
+            "classification": { "$ref": "#/$defs/classification" },
+            "lane_tags": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/lane_tag" },
+              "uniqueItems": true
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "file" } } },
+          "then": { "required": ["classification"] }
+        },
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "upg" } } },
+          "then": { "required": ["classification"] }
+        },
+        {
+          "if": { "required": ["kind"], "properties": { "kind": { "const": "artifact" } } },
+          "then": { "required": ["classification"] }
         }
-      }
+      ]
     },
     "edge": {
       "type": "object",

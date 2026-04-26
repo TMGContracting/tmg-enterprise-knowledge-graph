@@ -11,6 +11,7 @@
     "ended_at_utc",
     "tool_version",
     "repo_commit",
+    "upg_authority",
     "inputs",
     "outputs",
     "validation_status",
@@ -35,7 +36,7 @@
     },
     "upg_authority": {
       "type": "string",
-      "description": "Child UPG slug under which the run was executed"
+      "description": "Child UPG slug under which the run was executed (required, R2)"
     },
     "inputs": {
       "type": "array",
@@ -47,35 +48,46 @@
     },
     "validation_status": {
       "type": "string",
-      "enum": ["PASS", "FAIL_CLOSED", "STUB_NOOP"]
+      "enum": ["PASS", "FAIL_CLOSED", "STUB_NOOP", "ERROR"],
+      "description": "PASS: outputs valid. FAIL_CLOSED: allowlist/validation/contract failure with evidence. STUB_NOOP: stub CLI. ERROR: unexpected internal failure (evidence may still be written if safe)."
     },
     "fail_closed_reasons": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["code", "detail"],
-        "properties": {
-          "code": { "type": "string" },
-          "detail": { "type": "string" }
-        }
-      }
+      "items": { "$ref": "#/$defs/fail_closed_item" }
     }
   },
   "$defs": {
     "input_record": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["path", "content_sha256"],
       "properties": {
         "path": { "type": "string" },
-        "content_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
       }
     },
     "output_record": {
       "type": "object",
+      "additionalProperties": false,
       "required": ["path", "content_sha256"],
       "properties": {
         "path": { "type": "string" },
-        "content_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "fail_closed_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "detail"],
+      "properties": {
+        "code": { "type": "string" },
+        "detail": { "type": "string" }
       }
     }
   }

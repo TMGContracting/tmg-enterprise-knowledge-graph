@@ -38,6 +38,7 @@ def validate_evidence_minimal(document: dict[str, Any]) -> list[str]:
         "ended_at_utc",
         "tool_version",
         "repo_commit",
+        "upg_authority",
         "inputs",
         "outputs",
         "validation_status",

@@ -17,10 +17,94 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Parse JSON Schemas
+      - name: Parse JSON Schemas (syntax)
         run: |
           python3 -c "import json; json.load(open('schemas/tmg_ekg_graph_v0.schema.json'))"
           python3 -c "import json; json.load(open('schemas/tmg_ekg_evidence_v0.schema.json'))"
+
+      - name: R2 — validate minimal packet examples against v0 (JSON Schema + date-time)
+        run: |
+          pip install -q 'jsonschema[format-nongpl]>=4.22.0'
+          python3 << 'PY'
+          import json
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          root = Path(".")
+          graph_schema = json.loads(
+              (root / "schemas" / "tmg_ekg_graph_v0.schema.json").read_text()
+          )
+          ev_schema = json.loads(
+              (root / "schemas" / "tmg_ekg_evidence_v0.schema.json").read_text()
+          )
+          Draft202012Validator.check_schema(graph_schema)
+          Draft202012Validator.check_schema(ev_schema)
+          from jsonschema import FormatChecker
+          vg = Draft202012Validator(graph_schema, format_checker=FormatChecker())
+          ve = Draft202012Validator(ev_schema, format_checker=FormatChecker())
+
+          graph_ex = {
+              "schema_version": "tmgekg.graph.v0",
+              "graph_id": "example-r2-minimum",
+              "generated_at_utc": "2026-04-28T12:00:00Z",
+              "upg_authority": "UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001",
+              "parent_upg_authority": "UPG-GOV-GITNEXUS-MCP-STRUCTURAL-AWARENESS-001",
+              "nodes": [
+                  {
+                      "id": "node-repo-governance",
+                      "kind": "repo",
+                      "label": "TMGContracting/governance",
+                      "github": "TMGContracting/governance",
+                      "lane_tags": ["NONE"],
+                  },
+                  {
+                      "id": "node-upg-ekg-child",
+                      "kind": "upg",
+                      "label": "UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001",
+                      "path": "UPG/UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001.md",
+                      "classification": "canonical",
+                  },
+              ],
+              "edges": [
+                  {
+                      "id": "edge-contains-1",
+                      "kind": "contains",
+                      "from": "node-repo-governance",
+                      "to": "node-upg-ekg-child",
+                  }
+              ],
+          }
+          evidence_ex = {
+              "schema_version": "tmgekg.evidence.v0",
+              "run_id": "2026-04-28T12:00:00Z-abcdef12",
+              "started_at_utc": "2026-04-28T12:00:00Z",
+              "ended_at_utc": "2026-04-28T12:00:05Z",
+              "tool_version": "0.0.0",
+              "repo_commit": "0000000000000000000000000000000000000000",
+              "upg_authority": "UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001",
+              "inputs": [
+                  {
+                      "path": "UPG/UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001.md",
+                      "content_sha256": "2c26b46b68ffc68ff99b453c1d3041340e3ee2cbfda8517f29b3d4d0c0d0b0a1",
+                  }
+              ],
+              "outputs": [
+                  {
+                      "path": "data/index_runs/2026-04-28T12:00:00Z-abcdef12/graph.json",
+                      "content_sha256": "3a7bd3e2360a3d29ebea90ce6901c6c9147500c9b150b6f0f5e0c8a7b7a6e8a7",
+                  },
+                  {
+                      "path": "data/index_runs/2026-04-28T12:00:00Z-abcdef12/evidence.json",
+                      "content_sha256": "4a7bd3e2360a3d29ebea90ce6901c6c9147500c9b150b6f0f5e0c8a7b7a6e8a8",
+                  },
+              ],
+              "validation_status": "PASS",
+              "fail_closed_reasons": [],
+          }
+          vg.validate(graph_ex)
+          ve.validate(evidence_ex)
+          print("R2: minimal graph + evidence instances pass Draft 2020-12 + date-time (format-nongpl).")
+          PY
 
       - name: Install package (editable)
         run: |
