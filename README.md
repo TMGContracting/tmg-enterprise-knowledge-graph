@@ -3,30 +3,30 @@
 **UPG:** [`UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001`](https://github.com/TMGContracting/governance/blob/main/UPG/UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001.md) (child)  
 **Parent:** [`UPG-GOV-GITNEXUS-MCP-STRUCTURAL-AWARENESS-001`](https://github.com/TMGContracting/governance/blob/main/UPG/UPG-GOV-GITNEXUS-MCP-STRUCTURAL-AWARENESS-001.md)
 
-## Repository status: STUB ONLY
+## Repository status
 
-This repository is a **governance-authorized scaffold** for the **TMG Enterprise Knowledge Graph** read-only index prototype.
+**Phase 1:** a minimal **read-only** indexer (no network, no mutating `git` commands, no MCP server) indexes **only** a checked-out [TMGContracting/governance](https://github.com/TMGContracting/governance) clone, under the globs in `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md` (v0). Outputs are v0 `graph.json` and `evidence.json` with JSON Schema checks.
 
-- **No meaningful indexer logic** is implemented yet; CLI and modules are stubs.
-- **This is not** a claim that Section 6 implementation-merge gates are closed for production indexing PRs — see `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md` for gate status.
-- **No** MCP server, **no** production MCP registration, **no** GitNexus dependency or copied code (see `docs/CONTAMINATION_CONTROL.md`).
+- **This is not** a claim that Section 6 production-merge gates are closed — see `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md`.
+- **No** production MCP, **no** GitNexus dependency or copied code (`docs/CONTAMINATION_CONTROL.md`).
 
-## Planned layout (closed-set)
+## Layout (closed-set)
 
-See the child UPG **Section 5.1** for the authoritative path matrix. Key paths:
+- `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md` — feasibility and fail-closed rules
+- `docs/CONTAMINATION_CONTROL.md` — clean-room controls
+- `schemas/tmg_ekg_graph_v0.schema.json` — graph v0
+- `schemas/tmg_ekg_evidence_v0.schema.json` — evidence v0
+- `tools/readonly_index/` — indexer
+- `data/index_runs/<RUN_ID>/` — run output directory
 
-- `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md` — feasibility and fail-closed definition
-- `docs/CONTAMINATION_CONTROL.md` — clean-room / contamination controls
-- `schemas/tmg_ekg_graph_v0.schema.json` — Graph JSON v0
-- `schemas/tmg_ekg_evidence_v0.schema.json` — Evidence JSON v0
-- `tools/readonly_index/` — indexer package (stub)
-- `data/index_runs/<RUN_ID>/` — run outputs (when implemented)
+## CLI
 
-## CLI (stub)
+From the **tmg-enterprise-knowledge-graph** repo root, with a local **governance** clone:
 
 ```bash
 pip install -e .
-tmg-ekg-index --help
+EKG_GOVERNANCE_ROOT="/path/to/governance" tmg-ekg-index run --output-parent data/index_runs
+# or: tmg-ekg-index run --input-root /path/to/governance --output-parent data/index_runs
 ```
 
-Default invocation (without real configuration) exits with a stub message and non-zero status until indexing is implemented under a follow-on change.
+This writes `data/index_runs/<RUN_ID>/graph.json` and `data/index_runs/<RUN_ID>/evidence.json` in this repository only, validates them against the v0 schemas, and **does not** open network connections, modify the governance working tree, or use mutating `git` subcommands in the index tool. (`git rev-parse` may be used read-only to record the implementation commit in evidence.) For the evidence `outputs[1].content_sha256` field, the prototype records the SHA-256 of the canonical JSON **template** in which that field is sixty-four ASCII `0` characters, so the value is not always equal to a raw re-hash of the final on-disk `evidence.json` bytes.

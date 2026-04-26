@@ -1,12 +1,54 @@
-"""STUB validation helpers — minimal structural checks until full JSON Schema validation is wired."""
+"""Graph / evidence checks and JSON Schema validation."""
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
+
+from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import exceptions as jsonschema_exc
+
+
+def repo_root() -> Path:
+    """`tmg-enterprise-knowledge-graph` repository root (package lives under `tools/readonly_index/`)."""
+    return Path(__file__).resolve().parents[2]
+
+
+def load_graph_schema() -> dict[str, Any]:
+    p = repo_root() / "schemas" / "tmg_ekg_graph_v0.schema.json"
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def load_evidence_schema() -> dict[str, Any]:
+    p = repo_root() / "schemas" / "tmg_ekg_evidence_v0.schema.json"
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def validate_graph_jsonschema(document: dict[str, Any]) -> list[str]:
+    """Return list of error strings; empty if valid for Draft 2020-12 + date-time (format)."""
+    schema = load_graph_schema()
+    return _validate_against_schema(schema, document)
+
+
+def validate_evidence_jsonschema(document: dict[str, Any]) -> list[str]:
+    """Return list of error strings; empty if valid for Draft 2020-12 + date-time (format)."""
+    schema = load_evidence_schema()
+    return _validate_against_schema(schema, document)
+
+
+def _validate_against_schema(schema: dict[str, Any], document: Any) -> list[str]:
+    Draft202012Validator.check_schema(schema)
+    v = Draft202012Validator(schema, format_checker=FormatChecker())
+    try:
+        v.validate(document)
+    except jsonschema_exc.ValidationError as e:
+        return [e.json_path + ": " + (e.message or "validation error")]
+    return []
 
 
 def validate_graph_minimal(document: dict[str, Any]) -> list[str]:
-    """Return error strings; empty list means minimal structure OK."""
+    """Return error strings; empty list means minimal structure OK (legacy helper)."""
     errors: list[str] = []
     required = (
         "schema_version",
@@ -29,7 +71,7 @@ def validate_graph_minimal(document: dict[str, Any]) -> list[str]:
 
 
 def validate_evidence_minimal(document: dict[str, Any]) -> list[str]:
-    """Return error strings; empty list means minimal structure OK."""
+    """Return error strings; empty list means minimal structure OK (legacy helper)."""
     errors: list[str] = []
     required = (
         "schema_version",

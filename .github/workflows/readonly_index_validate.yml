@@ -111,8 +111,32 @@ jobs:
           pip install -U pip setuptools wheel
           pip install -e .
 
-      - name: Compile stub package
+      - name: Compile read-only index package
         run: python3 -m compileall -q tools/readonly_index
 
-      - name: CLI stub help
-        run: tmg-ekg-index --help
+      - name: CLI help
+        run: tmg-ekg-index run --help
+
+      - name: Read-only index — minimal fixture
+        run: |
+          F=$(mktemp -d)
+          mkdir -p "$F/UPG" "$F/upg/child/artifacts"
+          echo "x" > "$F/UPG/a.md"
+          echo "y" > "$F/upg/child/artifacts/b.md"
+          echo "{}" > "$F/upg/child/artifacts/c.json"
+          tmg-ekg-index run --input-root "$F" --output-parent data/index_runs
+          RUN_ID=$(ls -1 data/index_runs | head -1)
+          test -n "$RUN_ID"
+          test -f "data/index_runs/$RUN_ID/graph.json"
+          test -f "data/index_runs/$RUN_ID/evidence.json"
+          python3 << 'PY'
+          import json
+          from pathlib import Path
+          from readonly_index.validation import validate_graph_jsonschema, validate_evidence_jsonschema
+          run = sorted(p for p in Path("data/index_runs").iterdir() if p.is_dir())[-1]
+          g = json.loads((run / "graph.json").read_text())
+          e = json.loads((run / "evidence.json").read_text())
+          assert not validate_graph_jsonschema(g)
+          assert not validate_evidence_jsonschema(e)
+          print("Index run + JSON Schema revalidation OK:", run.name)
+          PY

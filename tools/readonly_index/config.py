@@ -1,13 +1,9 @@
-"""STUB ONLY — configuration for read-only indexer (allowlists to be implemented)."""
+"""Read-only indexer configuration (UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001)."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from pathlib import Path
-
-
-@dataclass(frozen=True)
-class ReadOnlyIndexConfig:
-    """Allowlisted filesystem roots. Empty tuple means no scan is permitted (fail-closed)."""
-
-    roots: tuple[Path, ...] = ()
+# Child + parent UPG (graph / evidence traceability)
+UPG_AUTHORITY = "UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001"
+PARENT_UPG_AUTHORITY = "UPG-GOV-GITNEXUS-MCP-STRUCTURAL-AWARENESS-001"
+REPO_GITHUB = "TMGContracting/governance"
+ENV_INPUT_ROOT = "EKG_GOVERNANCE_ROOT"

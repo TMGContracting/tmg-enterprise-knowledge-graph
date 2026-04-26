@@ -9,7 +9,9 @@ description = "TMG Enterprise Knowledge Graph — read-only index prototype (UPG
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
-dependencies = []
+dependencies = [
+  "jsonschema[format-nongpl]>=4.22.0",
+]
 
 [project.scripts]
 tmg-ekg-index = "readonly_index.cli:main"
