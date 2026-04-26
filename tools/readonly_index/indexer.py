@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import subprocess
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ from . import config as cfg
 from . import validation as V
 
 _RUN_ID_SAFE = re.compile(r"^[A-Za-z0-9._-]{4,256}$")
+INPUT_REPO_NODE = "n-input-repo"
 
 _HASH_ZERO = "0" * 64
 
@@ -28,6 +30,7 @@ class IndexResult:
     graph_path: Path
     evidence_path: Path
     input_count: int
+    input_repo_id: str
 
 
 def _zulu(dt: datetime) -> str:
@@ -58,6 +61,101 @@ def _implementation_repo_commit() -> str:
     except OSError:
         pass
     return "unknown"
+
+
+def _validate_repo_id_str(s: str) -> str:
+    t = s.strip()
+    if not t or ".." in t or "\0" in t or len(t) > 220 or t.count("/") != 1:
+        raise ValueError("repo id must be a single 'Org/Repo' string, e.g. TMGContracting/governance")
+    a, b = t.split("/")
+    if not a or not b:
+        raise ValueError("empty org or repo segment in repo id")
+    for p in (a, b):
+        if not re.match(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,200}$", p):
+            raise ValueError("invalid org/repo segment in repo id (alphanumeric, dot, hyphen, underscore)")
+    return t
+
+
+def _parse_github_remote_to_org_repo(url: str) -> str:
+    u = url.strip()
+    m = re.match(
+        r"^https?://github\.com/([^/]+)/([^/?#]+)(?:\.git)?", u, re.IGNORECASE
+    )
+    if m:
+        org, repo = m.group(1), m.group(2)
+        if "/" in org:
+            raise ValueError("unrecognized origin URL (nested path in org)")
+    else:
+        m = re.match(
+            r"^git@github\.com:([^/]+)/(.+?)(?:\.git)?$", u, re.IGNORECASE
+        )
+        if m:
+            org, repo = m.group(1), m.group(2)
+        else:
+            m = re.match(
+                r"^ssh://git@github\.com/([^/]+)/(.+?)(?:\.git)?/?$", u, re.IGNORECASE
+            )
+            if m:
+                org, repo = m.group(1), m.group(2)
+            else:
+                raise ValueError(
+                    f"non-github.com origin (cannot auto-resolve org/repo from {u!r}); "
+                    f"use --repo-id or {cfg.ENV_REPO_ID}"
+                )
+    repo = repo.rstrip("/")
+    if repo.endswith(".git"):
+        repo = repo[:-4]
+    if not org or not repo or "/" in repo or "/" in org:
+        raise ValueError("unrecognized origin URL; use --repo-id or " + cfg.ENV_REPO_ID)
+    return _validate_repo_id_str(f"{org}/{repo}")
+
+
+def _read_git_remote_origin(iroot: Path) -> str | None:
+    """Read-only: origin URL from input working tree, or None if not available."""
+    root = str(iroot.resolve())
+    try:
+        a = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except OSError:
+        return None
+    if a.returncode != 0 or a.stdout.strip() != "true":
+        return None
+    try:
+        b = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except OSError:
+        return None
+    if b.returncode != 0 or not (b.stdout or "").strip():
+        return None
+    return (b.stdout or "").strip()
+
+
+def resolve_input_repo_id(iroot: Path, repo_id_cli: str | None) -> str:
+    """Override order: --repo-id, then EKG_REPO_ID, then read-only `git remote get-url origin` (github.com)."""
+    if repo_id_cli is not None and str(repo_id_cli).strip():
+        return _validate_repo_id_str(str(repo_id_cli))
+    envv = (os.environ.get(cfg.ENV_REPO_ID) or "").strip()
+    if envv:
+        return _validate_repo_id_str(envv)
+    u = _read_git_remote_origin(iroot)
+    if not u:
+        raise ValueError(
+            "Cannot determine input repository id: not a git working tree with origin, "
+            "or git is unavailable. Set --repo-id or " + cfg.ENV_REPO_ID + "."
+        )
+    return _parse_github_remote_to_org_repo(u)
 
 
 def _safe_run_id(resolved_input_root: Path, rel_paths: list[str]) -> str:
@@ -128,14 +226,16 @@ def _node_id_for_path(rel_posix: str) -> str:
     return f"n-{h}"
 
 
-def _build_graph(rel_inputs: list[str], generated_at: str) -> dict[str, Any]:
+def _build_graph(
+    rel_inputs: list[str], generated_at: str, input_repo_id: str
+) -> dict[str, Any]:
     graph_id = "g-" + hashlib.sha256(("|".join(sorted(rel_inputs))).encode()).hexdigest()[:12]
     nodes: list[dict[str, Any]] = [
         {
-            "id": "n-repo-governance",
+            "id": INPUT_REPO_NODE,
             "kind": "repo",
-            "label": cfg.REPO_GITHUB,
-            "github": cfg.REPO_GITHUB,
+            "label": input_repo_id,
+            "github": input_repo_id,
             "lane_tags": ["NONE"],
         }
     ]
@@ -163,7 +263,7 @@ def _build_graph(rel_inputs: list[str], generated_at: str) -> dict[str, Any]:
             {
                 "id": f"e-contains-{nid}",
                 "kind": "contains",
-                "from": "n-repo-governance",
+                "from": INPUT_REPO_NODE,
                 "to": nid,
             }
         )
@@ -231,18 +331,20 @@ def run_index(
     input_root: Path,
     output_parent: Path,
     tool_version: str,
+    repo_id_cli: str | None = None,
 ) -> IndexResult:
     started = datetime.now(timezone.utc)
     started_s = _zulu(started)
     impl = V.repo_root()
     iroot = _validate_input_root_for_governance(input_root)
+    input_repo_id = resolve_input_repo_id(iroot, repo_id_cli)
     abs_files = _collect_allowed_files(iroot)
     rel_files: list[str] = [str(p.relative_to(iroot)).replace("\\", "/") for p in abs_files]
     if any(".." in r or r.startswith(("/", "\\")) for r in rel_files):
         raise ValueError("refusing: illegal relative path in inputs")
 
     generated_t = started_s
-    graph = _build_graph(rel_files, generated_t)
+    graph = _build_graph(rel_files, generated_t, input_repo_id)
     errs = V.validate_graph_jsonschema(graph)
     if errs:
         raise ValueError("graph JSON Schema: " + "; ".join(errs))
@@ -302,4 +404,5 @@ def run_index(
         graph_path=graph_path,
         evidence_path=ev_path,
         input_count=len(abs_files),
+        input_repo_id=input_repo_id,
     )

@@ -5,7 +5,7 @@
 
 ## Repository status
 
-**Phase 1:** a minimal **read-only** indexer (no network, no mutating `git` commands, no MCP server) indexes **only** a checked-out [TMGContracting/governance](https://github.com/TMGContracting/governance) clone, under the globs in `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md` (v0). Outputs are v0 `graph.json` and `evidence.json` with JSON Schema checks.
+**Phase 1:** a minimal **read-only** indexer (no network, no mutating `git` commands, no MCP server) indexes **one** checked-out repo root at a time (for example [TMGContracting/governance](https://github.com/TMGContracting/governance) or [TMGContracting/gomerai-governance](https://github.com/TMGContracting/gomerai-governance)) under the globs in `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md` (v0). Outputs are v0 `graph.json` and `evidence.json` with JSON Schema checks.
 
 - **This is not** a claim that Section 6 production-merge gates are closed — see `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md`.
 - **No** production MCP, **no** GitNexus dependency or copied code (`docs/CONTAMINATION_CONTROL.md`).
@@ -21,12 +21,14 @@
 
 ## CLI
 
-From the **tmg-enterprise-knowledge-graph** repo root, with a local **governance** clone:
+From the **tmg-enterprise-knowledge-graph** repo root, with a local **governance**-layout clone (Chancellor or Dean, one root per run):
 
 ```bash
 pip install -e .
 EKG_GOVERNANCE_ROOT="/path/to/governance" tmg-ekg-index run --output-parent data/index_runs
-# or: tmg-ekg-index run --input-root /path/to/governance --output-parent data/index_runs
+# or: tmg-ekg-index run --input-root /path/to/gomerai-governance --repo-id TMGContracting/gomerai-governance --output-parent data/index_runs
 ```
 
-This writes `data/index_runs/<RUN_ID>/graph.json` and `data/index_runs/<RUN_ID>/evidence.json` in this repository only, validates them against the v0 schemas, and **does not** open network connections, modify the governance working tree, or use mutating `git` subcommands in the index tool. (`git rev-parse` may be used read-only to record the implementation commit in evidence.) For the evidence `outputs[1].content_sha256` field, the prototype records the SHA-256 of the canonical JSON **template** in which that field is sixty-four ASCII `0` characters, so the value is not always equal to a raw re-hash of the final on-disk `evidence.json` bytes.
+**Repository identity in the graph `repo` node** (`github` and `label`): use `--repo-id Org/Repo`, or set `EKG_REPO_ID`, or omit both and the tool will try a **read-only** `git remote get-url origin` in the **input** tree when it is a `github.com` remote (fails closed if the input is not a git working tree with such an origin, unless you set `--repo-id` / `EKG_REPO_ID`).
+
+This writes `data/index_runs/<RUN_ID>/graph.json` and `data/index_runs/<RUN_ID>/evidence.json` in this repository only, validates them against the v0 schemas, and **does not** open network connections, modify the input working tree, or use mutating `git` subcommands. Read-only `git` in the **input** root (for `origin` URL) and in the **implementation** repo (for `repo_commit` in evidence) is allowed. For the evidence `outputs[1].content_sha256` field, the prototype uses the 64-ASCII-`0` **template** hash (see `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md` context).

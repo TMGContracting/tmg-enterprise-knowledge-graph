@@ -39,6 +39,14 @@ def _arg_input_root(p: argparse.ArgumentParser) -> None:
         metavar="DIR",
         help="Write runs under <DIR>/<RUN_ID>/ (default: data/index_runs)",
     )
+    p.add_argument(
+        "--repo-id",
+        type=str,
+        default=None,
+        metavar="Org/Repo",
+        help="Graph repo identity (e.g. TMGContracting/gomerai-governance). "
+        f"Else {cfg.ENV_REPO_ID} or read-only `git remote get-url origin` (github.com).",
+    )
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -54,7 +62,9 @@ def cmd_run(args: argparse.Namespace) -> int:
             return 2
         root = Path(env)
     try:
-        r = indexer.run_index(root, args.output_parent, _tool_version())
+        r = indexer.run_index(
+            root, args.output_parent, _tool_version(), repo_id_cli=args.repo_id
+        )
     except (FileNotFoundError, NotADirectoryError) as e:
         print(f"EKG read-only index: {e}", file=sys.stderr)
         return 2
@@ -68,6 +78,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     except ValueError:
         g_rel, e_rel = r.graph_path, r.evidence_path
     print(f"run_id: {r.run_id}")
+    print(f"repo:   {r.input_repo_id}")
     print(f"inputs: {r.input_count}")
     print(f"graph:  {g_rel}")
     print(f"evid:   {e_rel}")

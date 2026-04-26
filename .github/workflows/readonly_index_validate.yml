@@ -124,7 +124,7 @@ jobs:
           echo "x" > "$F/UPG/a.md"
           echo "y" > "$F/upg/child/artifacts/b.md"
           echo "{}" > "$F/upg/child/artifacts/c.json"
-          tmg-ekg-index run --input-root "$F" --output-parent data/index_runs
+          tmg-ekg-index run --input-root "$F" --output-parent data/index_runs --repo-id TMGContracting/governance
           RUN_ID=$(ls -1 data/index_runs | head -1)
           test -n "$RUN_ID"
           test -f "data/index_runs/$RUN_ID/graph.json"
