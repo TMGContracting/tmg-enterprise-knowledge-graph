@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.env
+.idea/
+.vscode/
+*.swp
+.DS_Store
+# Nested run directories (optional); top-level README and .gitkeep remain tracked
+data/index_runs/*/

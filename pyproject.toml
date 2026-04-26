@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tmg-enterprise-knowledge-graph"
+version = "0.0.0"
+description = "TMG Enterprise Knowledge Graph — read-only index prototype (UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.scripts]
+tmg-ekg-index = "readonly_index.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["tools"]

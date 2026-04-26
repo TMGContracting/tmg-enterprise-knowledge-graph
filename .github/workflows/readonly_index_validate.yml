@@ -1,0 +1,34 @@
+name: readonly_index_validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Parse JSON Schemas
+        run: |
+          python3 -c "import json; json.load(open('schemas/tmg_ekg_graph_v0.schema.json'))"
+          python3 -c "import json; json.load(open('schemas/tmg_ekg_evidence_v0.schema.json'))"
+
+      - name: Install package (editable)
+        run: |
+          pip install -U pip setuptools wheel
+          pip install -e .
+
+      - name: Compile stub package
+        run: python3 -m compileall -q tools/readonly_index
+
+      - name: CLI stub help
+        run: tmg-ekg-index --help

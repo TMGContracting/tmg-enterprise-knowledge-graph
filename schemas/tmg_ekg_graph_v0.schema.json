@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/TMGContracting/tmg-enterprise-knowledge-graph/schemas/tmg_ekg_graph_v0.schema.json",
+  "title": "TMG EKG Graph v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "graph_id",
+    "generated_at_utc",
+    "upg_authority",
+    "nodes",
+    "edges"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "tmgekg.graph.v0"
+    },
+    "graph_id": {
+      "type": "string",
+      "minLength": 8
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "upg_authority": {
+      "type": "string",
+      "description": "Governing UPG slug, e.g. UPG-GOV-TMG-EKG-READONLY-INDEX-PROTOTYPE-001"
+    },
+    "parent_upg_authority": {
+      "type": "string",
+      "description": "Optional parent UPG slug"
+    },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    }
+  },
+  "$defs": {
+    "classification": {
+      "type": "string",
+      "enum": ["canonical", "generated", "scaffold", "evidence"]
+    },
+    "lane_tag": {
+      "type": "string",
+      "enum": ["EPAP", "VQT", "PMS", "NONE"]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["repo", "authority", "upg", "artifact", "file"]
+        },
+        "label": { "type": "string" },
+        "path": { "type": "string", "description": "Repo-relative or logical path when applicable" },
+        "github": { "type": "string", "description": "Logical GitHub repo id for repo nodes" },
+        "classification": { "$ref": "#/$defs/classification" },
+        "lane_tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/lane_tag" },
+          "uniqueItems": true
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "from", "to"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "contains",
+            "precedes",
+            "authorizes",
+            "blast_radius",
+            "derived_from"
+          ]
+        },
+        "from": { "type": "string", "minLength": 1 },
+        "to": { "type": "string", "minLength": 1 },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}

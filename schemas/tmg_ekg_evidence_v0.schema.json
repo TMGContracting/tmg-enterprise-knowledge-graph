@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/TMGContracting/tmg-enterprise-knowledge-graph/schemas/tmg_ekg_evidence_v0.schema.json",
+  "title": "TMG EKG Evidence v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "started_at_utc",
+    "ended_at_utc",
+    "tool_version",
+    "repo_commit",
+    "inputs",
+    "outputs",
+    "validation_status",
+    "fail_closed_reasons"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "tmgekg.evidence.v0"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 4,
+      "description": "Unique run identifier, e.g. ISO8601 + short hash"
+    },
+    "started_at_utc": { "type": "string", "format": "date-time" },
+    "ended_at_utc": { "type": "string", "format": "date-time" },
+    "tool_version": { "type": "string" },
+    "repo_commit": {
+      "type": "string",
+      "description": "git commit of tmg-enterprise-knowledge-graph at run time"
+    },
+    "upg_authority": {
+      "type": "string",
+      "description": "Child UPG slug under which the run was executed"
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/input_record" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/output_record" }
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": ["PASS", "FAIL_CLOSED", "STUB_NOOP"]
+    },
+    "fail_closed_reasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "detail"],
+        "properties": {
+          "code": { "type": "string" },
+          "detail": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "input_record": {
+      "type": "object",
+      "required": ["path", "content_sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "content_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "output_record": {
+      "type": "object",
+      "required": ["path", "content_sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "content_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}
