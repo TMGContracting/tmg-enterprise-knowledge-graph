@@ -279,3 +279,27 @@ jobs:
           assert not validate_evidence_jsonschema(e)
           print("Index run + JSON Schema revalidation OK:", run.name)
           PY
+
+      - name: Phase 1C indexer — v0_1 minimal fixture (has_artifact + evidence fields)
+        run: |
+          F=$(mktemp -d)
+          mkdir -p "$F/UPG" "$F/upg/UPG-GOV-CI-MINI/artifacts"
+          echo "# ci" > "$F/UPG/UPG-GOV-CI-MINI.md"
+          echo "# art" > "$F/upg/UPG-GOV-CI-MINI/artifacts/x.md"
+          tmg-ekg-index run --input-root "$F" --output-parent data/index_runs --repo-id TMGContracting/governance --emit-version v0_1
+          python3 << 'PY'
+          import json
+          from pathlib import Path
+          from readonly_index.validation import validate_graph_jsonschema, validate_evidence_jsonschema
+
+          run = sorted((p for p in Path("data/index_runs").iterdir() if p.is_dir()), key=lambda p: p.stat().st_mtime)[-1]
+          g = json.loads((run / "graph.json").read_text())
+          e = json.loads((run / "evidence.json").read_text())
+          assert g["schema_version"] == "tmgekg.graph.v0_1"
+          assert e["schema_version"] == "tmgekg.evidence.v0_1"
+          assert e["rule_pack_version"] == "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001-R4"
+          assert not validate_graph_jsonschema(g)
+          assert not validate_evidence_jsonschema(e)
+          assert e["edge_type_counts"].get("has_artifact", 0) >= 1
+          print("Phase 1C v0_1 indexer OK:", run.name)
+          PY

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
@@ -47,6 +48,13 @@ def _arg_input_root(p: argparse.ArgumentParser) -> None:
         help="Graph repo identity (e.g. TMGContracting/gomerai-governance). "
         f"Else {cfg.ENV_REPO_ID} or read-only `git remote get-url origin` (github.com).",
     )
+    p.add_argument(
+        "--emit-version",
+        choices=("v0", "v0_1"),
+        default="v0",
+        help="v0: prototype graph/evidence (default). v0_1: Phase 1C enrichment per "
+        + cfg.PHASE1C_UPG_AUTHORITY,
+    )
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -63,7 +71,11 @@ def cmd_run(args: argparse.Namespace) -> int:
         root = Path(env)
     try:
         r = indexer.run_index(
-            root, args.output_parent, _tool_version(), repo_id_cli=args.repo_id
+            root,
+            args.output_parent,
+            _tool_version(),
+            repo_id_cli=args.repo_id,
+            emit_version=str(args.emit_version),
         )
     except (FileNotFoundError, NotADirectoryError) as e:
         print(f"EKG read-only index: {e}", file=sys.stderr)
@@ -82,6 +94,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     print(f"inputs: {r.input_count}")
     print(f"graph:  {g_rel}")
     print(f"evid:   {e_rel}")
+    if r.summary:
+        print("summary:", json.dumps(r.summary, indent=2, sort_keys=True))
     return 0
 
 

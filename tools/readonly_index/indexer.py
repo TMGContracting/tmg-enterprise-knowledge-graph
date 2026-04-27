@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from . import config as cfg
+from . import phase1c_graph as p1c
 from . import validation as V
 
 _RUN_ID_SAFE = re.compile(r"^[A-Za-z0-9._-]{4,256}$")
@@ -31,6 +32,7 @@ class IndexResult:
     evidence_path: Path
     input_count: int
     input_repo_id: str
+    summary: dict[str, Any] | None = None
 
 
 def _zulu(dt: datetime) -> str:
@@ -332,6 +334,7 @@ def run_index(
     output_parent: Path,
     tool_version: str,
     repo_id_cli: str | None = None,
+    emit_version: str = "v0",
 ) -> IndexResult:
     started = datetime.now(timezone.utc)
     started_s = _zulu(started)
@@ -344,7 +347,25 @@ def run_index(
         raise ValueError("refusing: illegal relative path in inputs")
 
     generated_t = started_s
-    graph = _build_graph(rel_files, generated_t, input_repo_id)
+    summary: dict[str, Any] | None = None
+    pb1c: p1c.Phase1cBuild | None = None
+    if emit_version == "v0":
+        graph = _build_graph(rel_files, generated_t, input_repo_id)
+    elif emit_version == "v0_1":
+        pb1c = p1c.build_phase1c_graph(
+            iroot.resolve(), rel_files, abs_files, generated_t, input_repo_id
+        )
+        graph = pb1c.graph
+        summary = {
+            "emit_version": "v0_1",
+            "node_count": len(graph["nodes"]),
+            "edge_count": len(graph["edges"]),
+            "edge_type_counts": dict(pb1c.edge_type_counts),
+            "lane_tag_counts": dict(pb1c.lane_tag_counts),
+            "conditional_edge_zero_reasons": list(pb1c.conditional_edge_zero_reasons),
+        }
+    else:
+        raise ValueError("emit_version must be v0 or v0_1")
     errs = V.validate_graph_jsonschema(graph)
     if errs:
         raise ValueError("graph JSON Schema: " + "; ".join(errs))
@@ -368,18 +389,37 @@ def run_index(
 
     ended = datetime.now(timezone.utc)
     ended_s = _zulu(ended)
-    ev_base: dict[str, Any] = {
-        "schema_version": "tmgekg.evidence.v0",
-        "run_id": run_id,
-        "started_at_utc": started_s,
-        "ended_at_utc": ended_s,
-        "tool_version": tool_version,
-        "repo_commit": _implementation_repo_commit(),
-        "upg_authority": cfg.UPG_AUTHORITY,
-        "inputs": input_records,
-        "validation_status": "PASS",
-        "fail_closed_reasons": [],
-    }
+    if emit_version == "v0":
+        ev_base = {
+            "schema_version": "tmgekg.evidence.v0",
+            "run_id": run_id,
+            "started_at_utc": started_s,
+            "ended_at_utc": ended_s,
+            "tool_version": tool_version,
+            "repo_commit": _implementation_repo_commit(),
+            "upg_authority": cfg.UPG_AUTHORITY,
+            "inputs": input_records,
+            "validation_status": "PASS",
+            "fail_closed_reasons": [],
+        }
+    else:
+        assert pb1c is not None
+        ev_base = {
+            "schema_version": "tmgekg.evidence.v0_1",
+            "run_id": run_id,
+            "started_at_utc": started_s,
+            "ended_at_utc": ended_s,
+            "tool_version": tool_version,
+            "repo_commit": _implementation_repo_commit(),
+            "upg_authority": cfg.PHASE1C_UPG_AUTHORITY,
+            "inputs": input_records,
+            "validation_status": "PASS",
+            "fail_closed_reasons": [],
+            "edge_type_counts": pb1c.edge_type_counts,
+            "conditional_edge_zero_reasons": pb1c.conditional_edge_zero_reasons,
+            "lane_tag_counts": pb1c.lane_tag_counts,
+            "rule_pack_version": V.RULE_PACK_VERSION_PHASE1C_R4,
+        }
     e0 = {**ev_base, "outputs": []}
     oerrs = V.validate_evidence_jsonschema(e0)
     if oerrs:
@@ -405,4 +445,5 @@ def run_index(
         evidence_path=ev_path,
         input_count=len(abs_files),
         input_repo_id=input_repo_id,
+        summary=summary,
     )
