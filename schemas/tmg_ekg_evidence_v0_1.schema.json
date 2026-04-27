@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/TMGContracting/tmg-enterprise-knowledge-graph/schemas/tmg_ekg_evidence_v0_1.schema.json",
+  "title": "TMG EKG Evidence v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "started_at_utc",
+    "ended_at_utc",
+    "tool_version",
+    "repo_commit",
+    "upg_authority",
+    "inputs",
+    "outputs",
+    "validation_status",
+    "fail_closed_reasons",
+    "edge_type_counts",
+    "conditional_edge_zero_reasons",
+    "lane_tag_counts",
+    "rule_pack_version"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "tmgekg.evidence.v0_1"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 4,
+      "description": "Unique run identifier, e.g. ISO8601 + short hash"
+    },
+    "started_at_utc": { "type": "string", "format": "date-time" },
+    "ended_at_utc": { "type": "string", "format": "date-time" },
+    "tool_version": { "type": "string" },
+    "repo_commit": {
+      "type": "string",
+      "description": "git commit of tmg-enterprise-knowledge-graph at run time"
+    },
+    "upg_authority": {
+      "type": "string",
+      "description": "UPG slug under which the run was executed"
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/input_record" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/output_record" }
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": ["PASS", "FAIL_CLOSED", "STUB_NOOP", "ERROR"],
+      "description": "PASS: outputs valid. FAIL_CLOSED: allowlist/validation failure. STUB_NOOP: stub CLI. ERROR: unexpected internal failure."
+    },
+    "fail_closed_reasons": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fail_closed_item" }
+    },
+    "edge_type_counts": {
+      "type": "object",
+      "description": "Non-negative counts per graph edge.kind for this run (UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001)",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "conditional_edge_zero_reasons": {
+      "type": "array",
+      "description": "Explains absent or skipped conditional edge kinds (parent_of, authorizes, precedes, blast_radius, derived_from)",
+      "items": { "$ref": "#/$defs/conditional_zero_reason" }
+    },
+    "lane_tag_counts": {
+      "type": "object",
+      "description": "Aggregate lane tag counts (implementation-defined counting rule)",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "rule_pack_version": {
+      "type": "string",
+      "const": "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001-R4",
+      "description": "Normative Phase 1C rule pack id (governance UPG reconciliation R4)"
+    }
+  },
+  "$defs": {
+    "input_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "content_sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "output_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "content_sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "content_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "fail_closed_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "detail"],
+      "properties": {
+        "code": { "type": "string" },
+        "detail": { "type": "string" }
+      }
+    },
+    "conditional_zero_reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edge_kind", "reason_code", "detail"],
+      "properties": {
+        "edge_kind": { "type": "string" },
+        "reason_code": { "type": "string" },
+        "detail": { "type": "string" }
+      }
+    }
+  }
+}

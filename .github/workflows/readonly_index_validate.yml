@@ -21,6 +21,8 @@ jobs:
         run: |
           python3 -c "import json; json.load(open('schemas/tmg_ekg_graph_v0.schema.json'))"
           python3 -c "import json; json.load(open('schemas/tmg_ekg_evidence_v0.schema.json'))"
+          python3 -c "import json; json.load(open('schemas/tmg_ekg_graph_v0_1.schema.json'))"
+          python3 -c "import json; json.load(open('schemas/tmg_ekg_evidence_v0_1.schema.json'))"
 
       - name: R2 — validate minimal packet examples against v0 (JSON Schema + date-time)
         run: |
@@ -106,6 +108,109 @@ jobs:
           print("R2: minimal graph + evidence instances pass Draft 2020-12 + date-time (format-nongpl).")
           PY
 
+      - name: Phase 1C scaffold — v0.1 schemas + minimal instances (UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001)
+        run: |
+          pip install -q 'jsonschema[format-nongpl]>=4.22.0'
+          python3 << 'PY'
+          import json
+          from pathlib import Path
+          from jsonschema import Draft202012Validator, FormatChecker
+
+          root = Path(".")
+          graph_schema = json.loads(
+              (root / "schemas" / "tmg_ekg_graph_v0_1.schema.json").read_text()
+          )
+          ev_schema = json.loads(
+              (root / "schemas" / "tmg_ekg_evidence_v0_1.schema.json").read_text()
+          )
+          Draft202012Validator.check_schema(graph_schema)
+          Draft202012Validator.check_schema(ev_schema)
+          vg = Draft202012Validator(graph_schema, format_checker=FormatChecker())
+          ve = Draft202012Validator(ev_schema, format_checker=FormatChecker())
+
+          graph_ex = {
+              "schema_version": "tmgekg.graph.v0_1",
+              "graph_id": "g-phase1c-ci-min",
+              "generated_at_utc": "2026-04-26T12:00:00Z",
+              "upg_authority": "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001",
+              "nodes": [
+                  {
+                      "id": "node-repo-governance",
+                      "kind": "repo",
+                      "label": "TMGContracting/governance",
+                      "github": "TMGContracting/governance",
+                      "lane_tags": ["NONE"],
+                  },
+                  {
+                      "id": "node-upg-phase1c",
+                      "kind": "upg",
+                      "label": "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001",
+                      "path": "UPG/UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001.md",
+                      "classification": "canonical",
+                      "lane_tags": ["GOV"],
+                  },
+              ],
+              "edges": [
+                  {
+                      "id": "edge-contains-1",
+                      "kind": "contains",
+                      "from": "node-repo-governance",
+                      "to": "node-upg-phase1c",
+                  }
+              ],
+          }
+          zeros = [
+              {"edge_kind": "parent_of", "reason_code": "no_markers_found", "detail": "ci fixture"},
+              {"edge_kind": "authorizes", "reason_code": "no_markers_found", "detail": "ci fixture"},
+              {"edge_kind": "precedes", "reason_code": "config_empty", "detail": "ci fixture"},
+              {"edge_kind": "blast_radius", "reason_code": "no_parseable_declaration", "detail": "ci fixture"},
+              {"edge_kind": "derived_from", "reason_code": "no_markers_found", "detail": "ci fixture"},
+          ]
+          evidence_ex = {
+              "schema_version": "tmgekg.evidence.v0_1",
+              "run_id": "2026-04-26T12:00:00Z-phase1c01",
+              "started_at_utc": "2026-04-26T12:00:00Z",
+              "ended_at_utc": "2026-04-26T12:00:05Z",
+              "tool_version": "0.0.0",
+              "repo_commit": "0000000000000000000000000000000000000000",
+              "upg_authority": "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001",
+              "inputs": [
+                  {
+                      "path": "UPG/UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001.md",
+                      "content_sha256": "2c26b46b68ffc68ff99b453c1d3041340e3ee2cbfda8517f29b3d4d0c0d0b0a1",
+                  }
+              ],
+              "outputs": [
+                  {
+                      "path": "data/index_runs/2026-04-26T12:00:00Z-phase1c01/graph.json",
+                      "content_sha256": "3a7bd3e2360a3d29ebea90ce6901c6c9147500c9b150b6f0f5e0c8a7b7a6e8a7",
+                  },
+                  {
+                      "path": "data/index_runs/2026-04-26T12:00:00Z-phase1c01/evidence.json",
+                      "content_sha256": "4a7bd3e2360a3d29ebea90ce6901c6c9147500c9b150b6f0f5e0c8a7b7a6e8a8",
+                  },
+              ],
+              "validation_status": "PASS",
+              "fail_closed_reasons": [],
+              "edge_type_counts": {
+                  "contains": 1,
+                  "has_artifact": 0,
+                  "parent_of": 0,
+                  "authorizes": 0,
+                  "precedes": 0,
+                  "blast_radius": 0,
+                  "derived_from": 0,
+                  "child_of": 0,
+              },
+              "conditional_edge_zero_reasons": zeros,
+              "lane_tag_counts": {"NONE": 1, "GOV": 1},
+              "rule_pack_version": "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001-R4",
+          }
+          vg.validate(graph_ex)
+          ve.validate(evidence_ex)
+          print("Phase 1C: v0.1 minimal graph + evidence pass JSON Schema (scaffold only; indexer still v0).")
+          PY
+
       - name: Install package (editable)
         run: |
           pip install -U pip setuptools wheel
@@ -113,6 +218,40 @@ jobs:
 
       - name: Compile read-only index package
         run: python3 -m compileall -q tools/readonly_index
+
+      - name: Validation helpers — v0.1 dispatch via readonly_index.validation
+        run: |
+          python3 << 'PY'
+          import json
+          from pathlib import Path
+          from readonly_index import validation as V
+
+          assert V.RULE_PACK_VERSION_PHASE1C_R4 == "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001-R4"
+          V.load_graph_schema_for_version("tmgekg.graph.v0_1")
+          V.load_evidence_schema_for_version("tmgekg.evidence.v0_1")
+          g = json.loads(Path("schemas/tmg_ekg_graph_v0_1.schema.json").read_text())
+          assert not V.validate_graph_jsonschema(
+              {
+                  "schema_version": "tmgekg.graph.v0_1",
+                  "graph_id": "g-dispatch-test",
+                  "generated_at_utc": "2026-04-26T15:00:00Z",
+                  "upg_authority": "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001",
+                  "nodes": [
+                      {"id": "r", "kind": "repo", "label": "X/Y", "github": "X/Y", "lane_tags": ["NONE"]},
+                      {
+                          "id": "u",
+                          "kind": "upg",
+                          "label": "L",
+                          "path": "UPG/UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001.md",
+                          "classification": "canonical",
+                          "lane_tags": ["GOV"],
+                      },
+                  ],
+                  "edges": [{"id": "e", "kind": "contains", "from": "r", "to": "u"}],
+              }
+          )
+          print("validation.dispatch: v0.1 OK")
+          PY
 
       - name: CLI help
         run: tmg-ekg-index run --help

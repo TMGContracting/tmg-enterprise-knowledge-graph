@@ -29,6 +29,8 @@
 | --- | --- | --- |
 | Graph v0 | `schemas/tmg_ekg_graph_v0.schema.json` | **Minimal valid examples:** **§10**. `file` / `upg` / `artifact` nodes require **`classification`**; `repo` / `authority` may omit; **lane_tags** for sparse **EPAP / VQT / PMS** (optional). |
 | Evidence v0 | `schemas/tmg_ekg_evidence_v0.schema.json` | **`upg_authority` required**; `validation_status` may be `PASS` \| `FAIL_CLOSED` \| `STUB_NOOP` \| `ERROR`; `fail_closed_reasons` is an array of structured objects (see schema). **§11** minimal example. |
+| Graph v0.1 | `schemas/tmg_ekg_graph_v0_1.schema.json` | **Phase 1C scaffold** per [`UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001`](https://github.com/TMGContracting/governance/blob/main/UPG/UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001.md): extended `edge.kind` and `lane_tag` enums; `repo` / `authority` / `upg` / `artifact` / `file` require **`lane_tags`** (v0.1). |
+| Evidence v0.1 | `schemas/tmg_ekg_evidence_v0_1.schema.json` | Adds **`edge_type_counts`**, **`conditional_edge_zero_reasons`**, **`lane_tag_counts`**, **`rule_pack_version`** (const **`UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001-R4`**). Indexer default output remains **v0** until enrichment is authorized. |
 
 **Child UPG Section 11 “example minimal valid documents”:** satisfied in **§10** and **§11** (embedded JSON).
 
