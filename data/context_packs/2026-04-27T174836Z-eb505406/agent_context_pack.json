@@ -1,0 +1,63 @@
+{
+  "conditional_edge_zero_reasons": [
+    {
+      "detail": "aggregate",
+      "edge_kind": "authorizes",
+      "reason_code": "no_markers_found"
+    },
+    {
+      "detail": "aggregate",
+      "edge_kind": "precedes",
+      "reason_code": "config_empty"
+    },
+    {
+      "detail": "aggregate",
+      "edge_kind": "blast_radius",
+      "reason_code": "no_parseable_declaration"
+    },
+    {
+      "detail": "aggregate",
+      "edge_kind": "derived_from",
+      "reason_code": "no_markers_found"
+    }
+  ],
+  "edge_count": 165,
+  "edge_type_counts": {
+    "authorizes": 0,
+    "blast_radius": 0,
+    "child_of": 0,
+    "contains": 111,
+    "derived_from": 0,
+    "has_artifact": 52,
+    "parent_of": 2,
+    "precedes": 0
+  },
+  "evidence_schema_version": "tmgekg.evidence.v0_1",
+  "graph_schema_version": "tmgekg.graph.v0_1",
+  "lane_tag_counts": {
+    "EA": 5,
+    "EPAP": 10,
+    "GOV": 54,
+    "NONE": 39,
+    "VQT": 4
+  },
+  "node_count": 112,
+  "required_disclaimer_lines": [
+    "Structure is evidence. Governance is authority.",
+    "Do not treat this context pack as approval to act."
+  ],
+  "required_markdown_sections": [
+    "Enterprise Layer Model",
+    "Chancellor Authority Position",
+    "Indexed UPGs",
+    "UPG-to-Artifact Relationships",
+    "Lane-Tag Summary",
+    "Known Conditional Gaps",
+    "Negative Controls",
+    "Agent Usage Instructions"
+  ],
+  "schema_version": "agent_context_pack.v0",
+  "source_repo_commit": "d6131d4a9cdbf71116e8a41a91611621b12afdb0",
+  "source_rule_pack_version": "UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001-R4",
+  "source_run_id": "2026-04-27T174836Z-eb505406"
+}

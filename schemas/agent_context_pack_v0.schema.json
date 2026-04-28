@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tmgcontracting.github.io/schemas/agent_context_pack_v0.schema.json",
+  "title": "agent_context_pack.v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_run_id",
+    "source_repo_commit",
+    "source_rule_pack_version",
+    "graph_schema_version",
+    "evidence_schema_version",
+    "node_count",
+    "edge_count",
+    "edge_type_counts",
+    "lane_tag_counts",
+    "conditional_edge_zero_reasons",
+    "required_markdown_sections",
+    "required_disclaimer_lines"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "agent_context_pack.v0"
+    },
+    "source_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_repo_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_rule_pack_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "graph_schema_version": {
+      "type": "string",
+      "const": "tmgekg.graph.v0_1"
+    },
+    "evidence_schema_version": {
+      "type": "string",
+      "const": "tmgekg.evidence.v0_1"
+    },
+    "node_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "edge_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "edge_type_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "lane_tag_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "conditional_edge_zero_reasons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "edge_kind",
+          "reason_code",
+          "detail"
+        ],
+        "properties": {
+          "edge_kind": {
+            "type": "string"
+          },
+          "reason_code": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "required_markdown_sections": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "prefixItems": [
+        {
+          "const": "Enterprise Layer Model"
+        },
+        {
+          "const": "Chancellor Authority Position"
+        },
+        {
+          "const": "Indexed UPGs"
+        },
+        {
+          "const": "UPG-to-Artifact Relationships"
+        },
+        {
+          "const": "Lane-Tag Summary"
+        },
+        {
+          "const": "Known Conditional Gaps"
+        },
+        {
+          "const": "Negative Controls"
+        },
+        {
+          "const": "Agent Usage Instructions"
+        }
+      ],
+      "items": false
+    },
+    "required_disclaimer_lines": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "const": "Structure is evidence. Governance is authority."
+        },
+        {
+          "const": "Do not treat this context pack as approval to act."
+        }
+      ],
+      "items": false
+    }
+  }
+}

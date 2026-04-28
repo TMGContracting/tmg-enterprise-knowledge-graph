@@ -10,6 +10,8 @@
 
 **Phase 1C:** **v0.1** schemas and `validation.py` dispatch on `schema_version`; CI validates **v0 and v0.1**. **`tmg-ekg-index run --emit-version v0_1`** emits enriched graph/evidence per the promoted UPG (see governance artifact `PHASE1C_RULE_PACK_GO_FOR_ENRICHMENT.md`).
 
+**Agent Context Pack (UPG-GOV-TMG-EKG-AGENT-CONTEXT-PACK-001):** `tmg-ekg-context-pack --run-id <RUN_ID>` generates static outputs from one validated Phase 1C graph/evidence pair under `data/context_packs/<RUN_ID>/`.
+
 - **This is not** a claim that Section 6 production-merge gates are closed — see `docs/feasibility/PHASE1_FEASIBILITY_PACKET.md`.
 - **No** production MCP, **no** GitNexus dependency or copied code (`docs/CONTAMINATION_CONTROL.md`).
 
@@ -21,8 +23,11 @@
 - `schemas/tmg_ekg_evidence_v0.schema.json` — evidence v0
 - `schemas/tmg_ekg_graph_v0_1.schema.json` — graph v0.1 (Phase 1C)
 - `schemas/tmg_ekg_evidence_v0_1.schema.json` — evidence v0.1 (Phase 1C; `rule_pack_version` = `UPG-GOV-TMG-EKG-GRAPH-QUALITY-PHASE1C-001-R4`)
+- `schemas/agent_context_pack_v0.schema.json` — static context pack JSON schema
 - `tools/readonly_index/` — indexer
+- `tools/context_pack/` — static context pack generator
 - `data/index_runs/<RUN_ID>/` — run output directory
+- `data/context_packs/<RUN_ID>/` — context pack outputs
 
 ## CLI
 

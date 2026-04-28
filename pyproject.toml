@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 tmg-ekg-index = "readonly_index.cli:main"
+tmg-ekg-context-pack = "context_pack.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["tools"]
