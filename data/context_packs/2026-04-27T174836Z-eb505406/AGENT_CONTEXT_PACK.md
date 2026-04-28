@@ -176,6 +176,9 @@ Present only when Phase 1C rules emitted them; absence is normal and is explaine
 - No GitNexus dependency/copy/fork/vendor/import/runtime.
 - No Dean repo expansion.
 - No multi-repo merge.
+- No AEP authorization.
+- No ADP authorization.
+- No EPAP ACP change authorization.
 - No raw UPG body summarization.
 - No LLM/AI inference.
 - No network access.
